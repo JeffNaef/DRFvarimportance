@@ -1,4 +1,5 @@
 
+
 library(kernlab)
 library(drf)
 library(Matrix)
@@ -12,121 +13,132 @@ set.seed(10)
 
 # Generate random data for independent variables X
 n <- 1000 # number of observations
-X <- matrix(runif(n * 3), ncol = 3) # 100 x 3 matrix with random values from a standard normal distribution
+X <-
+  matrix(runif(n * 3), ncol = 3) # 100 x 3 matrix with random values from a standard normal distribution
 
-d<-1
+d <- 2
 # There is a simple and a fancy example
-example<-"simple"
+example <- "simple"
 # Sample splitting or not?
-sample.splitting<-F
+sample.splitting <- F
 
 # Define coefficients for the linear combination
 # two-dimensional
 
-if (example=="simple"){
-
-if (d==2){
-B <- matrix(c(2, -1, 0.5, 0, 0, 0), ncol = 3) # 2 x 3 matrix with chosen coefficients
-mu <- c(0, 0) # mean for the random noise
-Sigma <- matrix(c(1, 0.5, 0.5, 1), nrow = 2) # covariance matrix for the random noise
-epsilon <- rmvnorm(n, mu, Sigma) # generate random noise following a bivariate normal distribution
-
-# Create the 2-dimensional response variable Y
-Y <- as.matrix(X %*% t(B) + epsilon) # compute Y as the linear combination of X and B plus random noise
-
-
-
-}else if (d==1){
-  
-# one-dimensional
-B<-matrix(c(5,5, 0), ncol=3)
-epsilon<-rnorm(n)
-## Create the 2-dimensional response variable Y
-Y <- as.matrix(X %*% t(B) + epsilon) # compute Y as the linear combination of X and B plus random noise
-  
-
-
-}
-}else if (example=="fancy"){
-  
+if (example == "simple") {
+  if (d == 2) {
+    B <-
+      matrix(c(2,-1, 0.5, 0, 0, 0), ncol = 3) # 2 x 3 matrix with chosen coefficients
+    mu <- c(0, 0) # mean for the random noise
+    Sigma <-
+      matrix(c(1, 0.5, 0.5, 1), nrow = 2) # covariance matrix for the random noise
+    epsilon <-
+      rmvnorm(n, mu, Sigma) # generate random noise following a bivariate normal distribution
+    
+    # Create the 2-dimensional response variable Y
+    Y <-
+      as.matrix(X %*% t(B) + epsilon) # compute Y as the linear combination of X and B plus random noise
+    
+    
+    
+  } else if (d == 1) {
+    # one-dimensional
+    B <- matrix(c(5, 5, 0), ncol = 3)
+    epsilon <- rnorm(n)
+    ## Create the 2-dimensional response variable Y
+    Y <-
+      as.matrix(X %*% t(B) + epsilon) # compute Y as the linear combination of X and B plus random noise
+    
+    
+    
+  }
+} else if (example == "fancy") {
   # more fancy example
-  sigX=X[,2]
-  Y<-matrix(rnorm(n,mean=0,sd=sqrt(sigX)), nrow=n)
+  sigX = X[, 2]
+  Y <- matrix(rnorm(n, mean = 0, sd = sqrt(sigX)), nrow = n)
 }
 
 
-if (sample.splitting==T){
-# Sample Splitting
-Xtest<-X[(round(n/2)+1):n,]
-Ytest<-Y[(round(n/2)+1):n,]
-# 
-X<-X[1:round(n/2),]
-Y<-Y[1:round(n/2),]
-}else{
-# No sample splitting
-Xtest<-X
-Ytest<-Y
+if (sample.splitting == T) {
+  # Sample Splitting
+  Xtest <- X[(round(n / 2) + 1):n, ]
+  Ytest <- Y[(round(n / 2) + 1):n, ]
+  #
+  X <- X[1:round(n / 2), ]
+  Y <- Y[1:round(n / 2), ]
+} else{
+  # No sample splitting
+  Xtest <- X
+  Ytest <- Y
 }
 
-B<-20
-num.trees<-1000
-alpha<-0.05
+B <- 1
+num.trees <- 1000
+alpha <- 0.05
 
 bandwidth_Y <- drf:::medianHeuristic(Ytest)
 k_Y <- rbfdot(sigma = bandwidth_Y)
 K <- kernelMatrix(k_Y, Y, y = Y)
 
 
-DRF <- 
-  drfCI(X = X,
-        Y = Y, 
-        B = B, num.trees = num.trees)
+DRF <-
+  drfCI(
+    X = X,
+    Y = Y,
+    B = B,
+    num.trees = num.trees
+  )
 
 # Prediction with all X
 DRFpred = predictdrf(DRF, x = Xtest)
-wall<-DRFpred$weights
-## 
+wall <- DRFpred$weights
+##
 
 
 I0 <- sapply(1:ncol(Xtest), function(j) {
   # iterate over class 1
   
   ## With CI
-  DRFj <- 
-    drfCI(X = X[,-j],
-          Y = Y, 
-          B = B, num.trees = num.trees)
+  DRFj <-
+    drfCI(
+      X = X[, -j],
+      Y = Y,
+      B = B,
+      num.trees = num.trees
+    )
   
-  DRFpredj = predictdrf(DRFj, x = Xtest[,-j])
-  wj<-DRFpredj$weights
-  val<-mean(diag( (wj - wall) %*% K %*% t(wj-wall) ))
+  DRFpredj = predictdrf(DRFj, x = Xtest[, -j])
+  wj <- DRFpredj$weights
+  val <- mean(diag((wj - wall) %*% K %*% t(wj - wall)))
   
   
-  if (B > 1){
-  # Get null distribution if B > 1
-  nulldist <- sapply(1:B, function(b) {
-    # iterate over class 1
+  if (B > 1) {
+    # Get null distribution if B > 1
+    nulldist <- sapply(1:B, function(b) {
+      # iterate over class 1
+      
+      wbj <- DRFpredj$weightsb[[b]]
+      wb <- DRFpred$weightsb[[b]]
+      
+      mean(diag((wb - wall - (wbj - wj)) %*% K %*% t(wb - wall - (wbj - wj))))
+    })
+    ##
+    right_quantile <- quantile(nulldist, 1 - alpha)
     
-    wbj<-DRFpredj$weightsb[[b]]
-    wb <-DRFpred$weightsb[[b]] 
     
-    mean( diag( (wb - wall - (wbj - wj)) %*% K %*% t(wb - wall - (wbj - wj))) )
-  })
-  ##
-  right_quantile <- quantile(nulldist, 1 - alpha)
+    max(val - unname(right_quantile), 0)
+  } else{
+    val
+  }
   
-  
-  max(val-unname(right_quantile),0)
-  }else{ 
-    val 
-    }
-
   
 })
 
 
-### The standardization is actually not correct!! We are calculating 
-### E[|\mu(X)|_H^2]! Need to also subtract \ \E[\mu(X)] |_H
-( I<-I0/as.numeric( mean(diag(  as.matrix(wall) %*% K %*% t( as.matrix(wall)) )) - colMeans(wall)%*%K%*%colMeans(wall) ) )
-
-
+### Somehow we get numbers larger than 1 here!! something is wrong
+wbar <- colMeans(wall)
+#( I<-I0/as.numeric( mean(diag(  as.matrix(wall) %*% K %*% t( as.matrix(wall)) )) - colMeans(wall)%*%K%*%colMeans(wall) ) )
+(I <-
+    I0 / as.numeric(mean(diag(
+      (wbar - wall) %*% K %*% t(wbar - wall)
+    ))))
