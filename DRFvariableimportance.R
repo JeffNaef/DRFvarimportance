@@ -135,7 +135,7 @@ I0 <- sapply(1:ncol(Xtest), function(j) {
 })
 
 
-### Somehow we get numbers larger than 1 here!! something is wrong
+### Calculate average weight
 wbar <- colMeans(wall)
 #( I<-I0/as.numeric( mean(diag(  as.matrix(wall) %*% K %*% t( as.matrix(wall)) )) - colMeans(wall)%*%K%*%colMeans(wall) ) )
 (I <-
