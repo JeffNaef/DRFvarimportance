@@ -18,7 +18,8 @@ d<-1
 # There is a simple and a fancy example
 example<-"simple"
 # Sample splitting or not?
-sample.splitting<-F
+sample.splitting<-T
+ntest<-10
 
 # Define coefficients for the linear combination
 # two-dimensional
@@ -57,11 +58,11 @@ Y <- as.matrix(X %*% t(B) + epsilon) # compute Y as the linear combination of X 
 
 if (sample.splitting==T){
 # Sample Splitting
-Xtest<-X[(round(n/2)+1):n,]
-Ytest<-Y[(round(n/2)+1):n,]
+Xtest<-X[(round(n-ntest)+1):n,]
+Ytest<-Y[(round(n-ntest)+1):n,]
 # 
-X<-X[1:round(n/2),]
-Y<-Y[1:round(n/2),]
+X<-X[1:round(n-ntest),]
+Y<-Y[1:round(n-ntest),]
 }else{
 # No sample splitting
 Xtest<-X
