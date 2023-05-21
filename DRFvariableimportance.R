@@ -16,11 +16,12 @@ n <- 1000 # number of observations
 X <-
   matrix(runif(n * 3), ncol = 3) # 100 x 3 matrix with random values from a standard normal distribution
 
-d <- 2
+d <- 1
 # There is a simple and a fancy example
 example <- "simple"
 # Sample splitting or not?
-sample.splitting <- F
+sample.splitting <- T
+ntest <- 10
 
 # Define coefficients for the linear combination
 # two-dimensional
@@ -43,7 +44,7 @@ if (example == "simple") {
     
   } else if (d == 1) {
     # one-dimensional
-    B <- matrix(c(5, 5, 0), ncol = 3)
+    B <- matrix(c(6, 3, 0), ncol = 3)
     epsilon <- rnorm(n)
     ## Create the 2-dimensional response variable Y
     Y <-
@@ -61,25 +62,24 @@ if (example == "simple") {
 
 if (sample.splitting == T) {
   # Sample Splitting
-  Xtest <- X[(round(n / 2) + 1):n, ]
-  Ytest <- Y[(round(n / 2) + 1):n, ]
+  Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
+  Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
   #
-  X <- X[1:round(n / 2), ]
-  Y <- Y[1:round(n / 2), ]
+  X <- X[1:round(n - ntest), , drop = F]
+  Y <- Y[1:round(n - ntest), , drop = F]
 } else{
   # No sample splitting
   Xtest <- X
   Ytest <- Y
 }
 
-B <- 1
+B <- 20
 num.trees <- 1000
 alpha <- 0.05
 
 bandwidth_Y <- drf:::medianHeuristic(Ytest)
 k_Y <- rbfdot(sigma = bandwidth_Y)
 K <- kernelMatrix(k_Y, Y, y = Y)
-
 
 DRF <-
   drfCI(
