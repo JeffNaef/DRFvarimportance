@@ -1,8 +1,12 @@
 
-drfwithVI <- function(X, Y, B, sampling = "binomial",...){
+drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
   
+  args<-list(...)
   
   if (sample.splitting == T) {
+    
+    ntest<-args$ntest
+    
     # Sample Splitting
     Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
     Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
@@ -21,38 +25,41 @@ drfwithVI <- function(X, Y, B, sampling = "binomial",...){
   k_Y <- rbfdot(sigma = bandwidth_Y)
   K <- kernelMatrix(k_Y, Y, y = Y)
   
-  DRF <-
-    drfCI(
-      X = X,
-      Y = Y,
-      B = B,
-      ...
-    )
   
-  # Prediction with all X
-  DRFpred = predictdrf(DRF, x = Xtest)
-  wall <- DRFpred$weights
-  ##
-  
-  
-  I0 <- sapply(1:ncol(Xtest), function(j) {
-    # iterate over class 1
+  if (B > 1){
     
-    ## With CI
-    DRFj <-
+    DRF <-
       drfCI(
-        X = X[, -j],
+        X = X,
         Y = Y,
         B = B,
-        ...
+        num.trees = num.trees
       )
     
-    DRFpredj = predictdrf(DRFj, x = Xtest[, -j])
-    wj <- DRFpredj$weights
-    val <- sum(diag( (wj - wall) %*% K %*% t(wj - wall) ))
+    # Prediction with all X
+    DRFpred = predictdrf(DRF, x = Xtest)
+    wall <- DRFpred$weights
+    ##
     
     
-    if (B > 1) {
+    I0 <- sapply(1:ncol(Xtest), function(j) {
+      # iterate over class 1
+      
+      ## With CI
+      DRFj <-
+        drfCI(
+          X = X[, -j],
+          Y = Y,
+          B = B,
+          num.trees = num.trees
+        )
+      
+      DRFpredj = predictdrf(DRFj, x = Xtest[, -j])
+      wj <- DRFpredj$weights
+      val <- sum(diag( (wj - wall) %*% K %*% t(wj - wall) ))
+      
+      
+      
       # Get null distribution if B > 1
       nulldist <- sapply(1:B, function(b) {
         # iterate over class 1
@@ -67,23 +74,49 @@ drfwithVI <- function(X, Y, B, sampling = "binomial",...){
       
       
       max(val - unname(right_quantile), 0)
-    } else{
-      val
-    }
+      
+      
+      
+    })
+    
+  }else{
+    
+    DRF2<-drf(X,Y, num.trees=num.trees)
+    wall<-predict(DRF2,x = Xtest)$weights
+    
+    I0 <- sapply(1:ncol(Xtest), function(j) {
+      # iterate over class 1
+      
+      ## With CI
+      DRFj <-
+        drf(
+          X = X[, -j],
+          Y = Y,
+          num.trees = num.trees
+        )
+      
+      DRFpredj = predict(DRFj, x = Xtest[, -j])
+      wj <- DRFpredj$weights
+      val <- sum(diag( (wj - wall) %*% K %*% t(wj - wall) ))
+      
+    })
     
     
-  })
-  
-  
+  }
   
   ### Calculate average weight
   wbar <- colMeans(wall)
+  # alternative:
+  #wbar<- rep(1/ntest,ntest)
   wall_wbar<-sweep(wall, 2, wbar, "-")
   #( I<-I0/as.numeric( mean(diag(  as.matrix(wall) %*% K %*% t( as.matrix(wall)) )) - colMeans(wall)%*%K%*%colMeans(wall) ) )
   (I <-
       I0 / as.numeric(sum(diag(
         wall_wbar %*% K %*% t(wall_wbar)
       ))))
+  
+  
+  return(I)
   
   
   
