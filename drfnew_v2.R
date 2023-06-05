@@ -1,3 +1,97 @@
+
+drfwithVI <- function(X, Y, B, sampling = "binomial",...){
+  
+  
+  if (sample.splitting == T) {
+    # Sample Splitting
+    Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
+    Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
+    #
+    X <- X[1:round(n - ntest), , drop = F]
+    Y <- Y[1:round(n - ntest), , drop = F]
+  } else{
+    # No sample splitting
+    Xtest <- X
+    Ytest <- Y
+  }
+  
+  
+  
+  bandwidth_Y <- drf:::medianHeuristic(Ytest)
+  k_Y <- rbfdot(sigma = bandwidth_Y)
+  K <- kernelMatrix(k_Y, Y, y = Y)
+  
+  DRF <-
+    drfCI(
+      X = X,
+      Y = Y,
+      B = B,
+      ...
+    )
+  
+  # Prediction with all X
+  DRFpred = predictdrf(DRF, x = Xtest)
+  wall <- DRFpred$weights
+  ##
+  
+  
+  I0 <- sapply(1:ncol(Xtest), function(j) {
+    # iterate over class 1
+    
+    ## With CI
+    DRFj <-
+      drfCI(
+        X = X[, -j],
+        Y = Y,
+        B = B,
+        ...
+      )
+    
+    DRFpredj = predictdrf(DRFj, x = Xtest[, -j])
+    wj <- DRFpredj$weights
+    val <- sum(diag( (wj - wall) %*% K %*% t(wj - wall) ))
+    
+    
+    if (B > 1) {
+      # Get null distribution if B > 1
+      nulldist <- sapply(1:B, function(b) {
+        # iterate over class 1
+        
+        wbj <- DRFpredj$weightsb[[b]]
+        wb <- DRFpred$weightsb[[b]]
+        
+        sum(diag((wb - wall - (wbj - wj)) %*% K %*% t(wb - wall - (wbj - wj))))
+      })
+      ##
+      right_quantile <- quantile(nulldist, 1 - alpha)
+      
+      
+      max(val - unname(right_quantile), 0)
+    } else{
+      val
+    }
+    
+    
+  })
+  
+  
+  
+  ### Calculate average weight
+  wbar <- colMeans(wall)
+  wall_wbar<-sweep(wall, 2, wbar, "-")
+  #( I<-I0/as.numeric( mean(diag(  as.matrix(wall) %*% K %*% t( as.matrix(wall)) )) - colMeans(wall)%*%K%*%colMeans(wall) ) )
+  (I <-
+      I0 / as.numeric(sum(diag(
+        wall_wbar %*% K %*% t(wall_wbar)
+      ))))
+  
+  
+  
+}
+
+
+
+
 drfCI <- function(X, Y, B, sampling = "binomial",...) {
   
   n <- dim(X)[1]
