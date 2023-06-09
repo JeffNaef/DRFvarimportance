@@ -5,64 +5,75 @@ library(drf)
 library(Matrix)
 # Load necessary libraries
 library(mvtnorm) # for generating multivariate normal random variables
-
+library(ks)
 
 source("drfnew_v2.R")
+source("applications")
 
 set.seed(10)
 
-# Generate random data for independent variables X
-n <- 1000 # number of observations
-X <-
-  matrix(runif(n * 3), ncol = 3) # 100 x 3 matrix with random values from a standard normal distribution
+### Continue with more fancy examples!!!
 
-d <- 1
-# There is a simple and a fancy example
-example <- "fancy"
-# Sample splitting or not?
-sample.splitting <- T
-ntest <- n/2
+n<-200
+ntest<-round(n*0.1)
+
+## Step 1: Get the dataset
+tmp<-genData(dataset = "synthetic1", n = n, p = 10, meanShift = 1, sdShift = 1)
+
+X<-tmp$X
+Y<-as.matrix(tmp$y)
 
 
-# Define coefficients for the linear combination
-# two-dimensional
 
-if (example == "simple") {
-  if (d == 2) {
-    B <-
-      matrix(c(2,-1, 0.5, 0, 0, 0), ncol = 3) # 2 x 3 matrix with chosen coefficients
-    mu <- c(0, 0) # mean for the random noise
-    Sigma <-
-      matrix(c(1, 0.5, 0.5, 1), nrow = 2) # covariance matrix for the random noise
-    epsilon <-
-      rmvnorm(n, mu, Sigma) # generate random noise following a bivariate normal distribution
-    
-    # Create the 2-dimensional response variable Y
-    Y <-
-      as.matrix(X %*% t(B) + epsilon) # compute Y as the linear combination of X and B plus random noise
-    
-    
-    
-  } else if (d == 1) {
-    # one-dimensional
-    b <- matrix(c(6, 3, 0), ncol = 3)
-    epsilon <- rnorm(n)
-    ## Create the 2-dimensional response variable Y
-    Y <-
-      as.matrix(X %*% t(b) + epsilon) # compute Y as the linear combination of X and B plus random noise
-    
-    
-    
-  }
-} else if (example == "fancy") {
-  # more fancy example
-  sigX = X[, 2]
-  Y <- matrix(rnorm(n, mean = 0, sd = sqrt(sigX)), nrow = n)
+
+
+### if the dataset is synthetic, we can check the correct variable ordering
+ressynth<-drfwithVI(X, Y, B=1, num.trees=100)
+
+sort(ressynth$VI)
+
+
+### if it is a real dataset, I need to make a prediction function that successively filters
+# Sample Splitting
+Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
+Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
+#
+X <- X[1:round(n - ntest), , drop = F]
+Y <- Y[1:round(n - ntest), , drop = F]
+resreal<-featureeliminnation(X,Y)
+
+
+## Define a distance function D
+dmmd<-function(w, Y,y){
+  
+  # Simulate 500 observations from Y|X=x
+  Yx<-sample(Y,size=500, replace=T,prob=w)
+  
+  ## Can do this better by direct calculation!
+  
+  return(mmd(y,Yx,sigma=1))
+  
 }
 
+dNPLD <- function(w,Y,y){
+  
+  
+  # Simulate 500 observations from Y|X=x
+  Yx<-sample(Y,size=500, replace=T,prob=w)
+  densityvaly <- kde(Yx, eval.points = y)$estimate
+  
+  return( - log(densityvaly))
+  
+}
+
+eval<-distpredicteval(X,Y,Xtest, Ytest, DRF,dNPLD)
 
 
-### Continue with more fancy examples!!!
+
+tmp<-drf(X=X.NA,Y=Y)
+
+
+predict(tmp,X[1,,drop=F])$weights[1,]
 
 
 B <- 1
@@ -74,6 +85,57 @@ drfwithVI(X, Y, B, num.trees=num.trees)
 
 
 
+
+
+
+# # Generate random data for independent variables X
+# n <- 1000 # number of observations
+# X <-
+#   matrix(runif(n * 3), ncol = 3) # 100 x 3 matrix with random values from a standard normal distribution
+# 
+# d <- 1
+# # There is a simple and a fancy example
+# example <- "fancy"
+# # Sample splitting or not?
+# sample.splitting <- T
+# ntest <- n/2
+# 
+# 
+# # Define coefficients for the linear combination
+# # two-dimensional
+# 
+# if (example == "simple") {
+#   if (d == 2) {
+#     B <-
+#       matrix(c(2,-1, 0.5, 0, 0, 0), ncol = 3) # 2 x 3 matrix with chosen coefficients
+#     mu <- c(0, 0) # mean for the random noise
+#     Sigma <-
+#       matrix(c(1, 0.5, 0.5, 1), nrow = 2) # covariance matrix for the random noise
+#     epsilon <-
+#       rmvnorm(n, mu, Sigma) # generate random noise following a bivariate normal distribution
+#     
+#     # Create the 2-dimensional response variable Y
+#     Y <-
+#       as.matrix(X %*% t(B) + epsilon) # compute Y as the linear combination of X and B plus random noise
+#     
+#     
+#     
+#   } else if (d == 1) {
+#     # one-dimensional
+#     b <- matrix(c(6, 3, 0), ncol = 3)
+#     epsilon <- rnorm(n)
+#     ## Create the 2-dimensional response variable Y
+#     Y <-
+#       as.matrix(X %*% t(b) + epsilon) # compute Y as the linear combination of X and B plus random noise
+#     
+#     
+#     
+#   }
+# } else if (example == "fancy") {
+#   # more fancy example
+#   sigX = X[, 2]
+#   Y <- matrix(rnorm(n, mean = 0, sd = sqrt(sigX)), nrow = n)
+# }
 
 # 
 # 

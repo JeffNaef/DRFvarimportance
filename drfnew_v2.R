@@ -1,4 +1,27 @@
 
+
+
+# Compute the MMD
+mmd <- function(X, Y, sigma) {
+  # Define the Gaussian kernel
+  k_X <- rbfdot(sigma = sigma)
+  k_Y <- rbfdot(sigma = sigma)
+  
+  # Compute the kernel matrices
+  K_X <- kernelMatrix(k_X, X, y = X)
+  K_Y <- kernelMatrix(k_Y, Y, y = Y)
+  K_XY <- kernelMatrix(k_X, X, y = Y)
+  
+  # Compute the average kernel values
+  XX <- mean(K_X)
+  YY <- mean(K_Y)
+  XY <- mean(K_XY)
+  
+  # Compute the MMD
+  sqrt(XX + YY - 2 * XY)
+}
+
+
 drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
   
   args<-list(...)
@@ -115,12 +138,53 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
         wall_wbar %*% K %*% t(wall_wbar)
       ))))
   
+  names(I) <- paste0("X", 1:ncol(X))
   
-  return(I)
-  
+  if (B > 1){
+  return( list(VI=I, weights=wall,DRFpred=DRFpred))
+  }else{
+    return( list(VI=I, weights=wall)) 
+  }
   
   
 }
+
+
+
+featureeliminnation<- function(X,Y, B=1, num.trees=1000,...){
+  
+  
+  
+  res<-drfwithVI(X, Y, B=B, num.trees=num.trees)
+  Xnew<-X[,-which.min(res$VI)]
+  
+  return(list( Xnew=Xnew, which=names(which.min(res$VI)), res=res  ) )
+  
+  
+}
+
+
+
+distpredicteval <- function(X,Y,Xtest, Ytest, DRF,d){
+  
+  
+  ## d: a function that takes in d, Y and a test point y and evaluates a metric
+  ## of accuracy
+  
+  # Step 1: Fit and Predict
+  DRF<-drf(X,Y, num.trees=num.trees)
+  weights<-predict(DRF,Xtest)$weights
+  
+  D<-sapply(1:nrow(weights),function(i){
+    
+    d(weights[i,], Y, Ytest[i,])
+    
+  } )
+  
+  return(mean(D))
+  
+}
+
 
 
 
