@@ -193,10 +193,15 @@ dNPLD <- function(w,Y,y){
 
 
 distpredicteval <- function(X,Y,Xtest, Ytest,d, ...){
-  
+
   
   ## d: a function that takes in d, Y and a test point y and evaluates a metric
   ## of accuracy
+  
+  if (ncol(Xtest)!=ncol(X)){
+    stop("Xtest must have same number of columns as X")
+  }
+  
   
   # Step 1: Fit and Predict
   DRF<-drf(X,Y, ...)
@@ -204,7 +209,7 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d, ...){
   
   D<-sapply(1:nrow(weights),function(i){
     
-    d(weights[i,], Y, Ytest[i,])
+   - d(weights[i,], Y, Ytest[i,])
     
   } )
   

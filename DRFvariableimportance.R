@@ -47,37 +47,22 @@ Y <- Y[1:round(n - ntest), , drop = F]
 
 
 
-whichvar<-rep(NA,ncol(X))
-eval<-rep(NA,ncol(X))
+whichvar<-rep(NA,ncol(X)-1)
+eval<-rep(NA,ncol(X)-1)
+p<-ncol(X)
 
-for (j in 1:(ncol(X) -1)  ){
+for (j in 1:(p - 1)  ){
   
 
   # remove variable with smallest VI
   resreal<-featureeliminnation(X,Y)
   X<-resreal$Xnew
-  Xtest<-Xtest[,!( colnames(Xtest) %in% resreal$which)]
+  Xtest<-Xtest[,!( colnames(Xtest) %in% resreal$which), drop=F]
   
 
   whichvar[j] <-resreal$which
   eval[j]<-distpredicteval(X,Y,Xtest, Ytest,dNPLD, num.trees=num.trees)
 }
-
-
-tmp<-drf(X=X.NA,Y=Y)
-
-
-predict(tmp,X[1,,drop=F])$weights[1,]
-
-
-B <- 1
-num.trees <- 1000
-alpha <- 0.05
-
-
-drfwithVI(X, Y, B, num.trees=num.trees)
-
-
 
 
 
