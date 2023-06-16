@@ -26,6 +26,11 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
   
   args<-list(...)
   
+  
+  if (is.null(colnames(X))){
+    colnames(X) <- paste0("X",1:ncol(X))
+  }
+  
   if (sample.splitting == T) {
     
     ntest<-args$ntest
@@ -56,8 +61,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
         X = X,
         Y = Y,
         B = B,
-        num.trees = num.trees
-      )
+        ...)
     
     # Prediction with all X
     DRFpred = predictdrf(DRF, x = Xtest)
@@ -71,10 +75,10 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
       ## With CI
       DRFj <-
         drfCI(
-          X = X[, -j],
+          X = X[, -j, drop=F],
           Y = Y,
           B = B,
-          num.trees = num.trees
+          ...
         )
       
       DRFpredj = predictdrf(DRFj, x = Xtest[, -j])
@@ -104,7 +108,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
     
   }else{
     
-    DRF2<-drf(X,Y, num.trees=num.trees)
+    DRF2<-drf(X,Y, ...)
     wall<-predict(DRF2,x = Xtest)$weights
     
     I0 <- sapply(1:ncol(Xtest), function(j) {
@@ -113,10 +117,9 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
       ## With CI
       DRFj <-
         drf(
-          X = X[, -j],
+          X = X[, -j, drop=F],
           Y = Y,
-          num.trees = num.trees
-        )
+         ...)
       
       DRFpredj = predict(DRFj, x = Xtest[, -j])
       wj <- DRFpredj$weights
@@ -138,7 +141,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
         wall_wbar %*% K %*% t(wall_wbar)
       ))))
   
-  names(I) <- paste0("X", 1:ncol(X))
+  names(I) <- colnames(X)
   
   if (B > 1){
   return( list(VI=I, weights=wall,DRFpred=DRFpred))
@@ -156,7 +159,7 @@ featureeliminnation<- function(X,Y, B=1, num.trees=1000,...){
   
   
   res<-drfwithVI(X, Y, B=B, num.trees=num.trees)
-  Xnew<-X[,-which.min(res$VI)]
+  Xnew<-X[,-which.min(res$VI), drop=F]
   
   return(list( Xnew=Xnew, which=names(which.min(res$VI)), res=res  ) )
   
@@ -164,15 +167,39 @@ featureeliminnation<- function(X,Y, B=1, num.trees=1000,...){
 }
 
 
+## Define a distance function D
+dmmd<-function(w, Y,y){
+  
+  # Simulate 500 observations from Y|X=x
+  Yx<-sample(Y,size=500, replace=T,prob=w)
+  
+  ## Can do this better by direct calculation!
+  
+  return(mmd(y,Yx,sigma=1))
+  
+}
 
-distpredicteval <- function(X,Y,Xtest, Ytest, DRF,d){
+dNPLD <- function(w,Y,y){
+  
+  
+  # Simulate 500 observations from Y|X=x
+  Yx<-sample(Y,size=500, replace=T,prob=w)
+  densityvaly <- kde(Yx, eval.points = y)$estimate
+  
+  return( - log(densityvaly))
+  
+}
+
+
+
+distpredicteval <- function(X,Y,Xtest, Ytest,d, ...){
   
   
   ## d: a function that takes in d, Y and a test point y and evaluates a metric
   ## of accuracy
   
   # Step 1: Fit and Predict
-  DRF<-drf(X,Y, num.trees=num.trees)
+  DRF<-drf(X,Y, ...)
   weights<-predict(DRF,Xtest)$weights
   
   D<-sapply(1:nrow(weights),function(i){

@@ -8,7 +8,8 @@ library(mvtnorm) # for generating multivariate normal random variables
 library(ks)
 
 source("drfnew_v2.R")
-source("applications")
+#source("applications")
+source("genData.R")
 
 set.seed(10)
 
@@ -16,58 +17,51 @@ set.seed(10)
 
 n<-200
 ntest<-round(n*0.1)
+num.trees<-100
 
 ## Step 1: Get the dataset
 tmp<-genData(dataset = "synthetic1", n = n, p = 10, meanShift = 1, sdShift = 1)
 
 X<-tmp$X
 Y<-as.matrix(tmp$y)
+colnames(X) <- paste0("X",1:ncol(X))
 
 
 
 
+## Step 2: Do Analysis
 
-### if the dataset is synthetic, we can check the correct variable ordering
-ressynth<-drfwithVI(X, Y, B=1, num.trees=100)
+### 2.a) if the dataset is synthetic, we can check the correct variable ordering
+ressynth<-drfwithVI(X, Y, B=1, num.trees=num.trees)
 
 sort(ressynth$VI)
 
 
-### if it is a real dataset, I need to make a prediction function that successively filters
+### 2.b) if it is a real dataset, I need to make a prediction function that successively filters
 # Sample Splitting
 Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
 Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
 #
 X <- X[1:round(n - ntest), , drop = F]
 Y <- Y[1:round(n - ntest), , drop = F]
-resreal<-featureeliminnation(X,Y)
 
 
-## Define a distance function D
-dmmd<-function(w, Y,y){
+
+whichvar<-rep(NA,ncol(X))
+eval<-rep(NA,ncol(X))
+
+for (j in 1:(ncol(X) -1)  ){
   
-  # Simulate 500 observations from Y|X=x
-  Yx<-sample(Y,size=500, replace=T,prob=w)
+
+  # remove variable with smallest VI
+  resreal<-featureeliminnation(X,Y)
+  X<-resreal$Xnew
+  Xtest<-Xtest[,!( colnames(Xtest) %in% resreal$which)]
   
-  ## Can do this better by direct calculation!
-  
-  return(mmd(y,Yx,sigma=1))
-  
+
+  whichvar[j] <-resreal$which
+  eval[j]<-distpredicteval(X,Y,Xtest, Ytest,dNPLD, num.trees=num.trees)
 }
-
-dNPLD <- function(w,Y,y){
-  
-  
-  # Simulate 500 observations from Y|X=x
-  Yx<-sample(Y,size=500, replace=T,prob=w)
-  densityvaly <- kde(Yx, eval.points = y)$estimate
-  
-  return( - log(densityvaly))
-  
-}
-
-eval<-distpredicteval(X,Y,Xtest, Ytest, DRF,dNPLD)
-
 
 
 tmp<-drf(X=X.NA,Y=Y)
