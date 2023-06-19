@@ -19,6 +19,12 @@ n<-200
 ntest<-round(n*0.1)
 num.trees<-100
 
+##### Continue with the collection of the DRF datasets ######
+## Discuss with Julie: Could be super interesting to use a medical dataset with
+## patients, whereby X is the patients characteristics and Y is a stream of measurements
+##(though would probably need Gaussian processes in a first step)
+
+
 ## Step 1: Get the dataset
 tmp<-genData(dataset = "synthetic1", n = n, p = 10, meanShift = 1, sdShift = 1)
 
