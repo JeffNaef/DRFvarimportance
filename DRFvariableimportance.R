@@ -7,17 +7,23 @@ library(Matrix)
 library(mvtnorm) # for generating multivariate normal random variables
 library(ks)
 
+
+library(dplyr)
+library(kableExtra)
+library(copula)
+
 source("drfnew_v2.R")
 #source("applications")
 source("genData.R")
+source("evaluation.R")
 
 set.seed(10)
 
 ### Continue with more fancy examples!!!
 
-n<-200
+n<-500
 ntest<-round(n*0.1)
-num.trees<-100
+num.trees<-3000
 
 ##### Continue with the collection of the DRF datasets ######
 ## Discuss with Julie: Could be super interesting to use a medical dataset with
@@ -25,51 +31,19 @@ num.trees<-100
 ##(though would probably need Gaussian processes in a first step)
 
 
-## Step 1: Get the dataset
-tmp<-genData(dataset = "synthetic1", n = n, p = 10, meanShift = 1, sdShift = 1)
-
-X<-tmp$X
-Y<-as.matrix(tmp$y)
-colnames(X) <- paste0("X",1:ncol(X))
-
-
-
 
 ## Step 2: Do Analysis
 
 ### 2.a) if the dataset is synthetic, we can check the correct variable ordering
-ressynth<-drfwithVI(X, Y, B=1, num.trees=num.trees)
+evalsynthetic(dataset="copulasynthetic", L=10, n=n, p=10, num.trees = num.trees)
 
-sort(ressynth$VI)
+
 
 
 ### 2.b) if it is a real dataset, I need to make a prediction function that successively filters
 # Sample Splitting
-Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
-Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
-#
-X <- X[1:round(n - ntest), , drop = F]
-Y <- Y[1:round(n - ntest), , drop = F]
 
-
-
-whichvar<-rep(NA,ncol(X)-1)
-eval<-rep(NA,ncol(X)-1)
-p<-ncol(X)
-
-for (j in 1:(p - 1)  ){
-  
-
-  # remove variable with smallest VI
-  resreal<-featureeliminnation(X,Y)
-  X<-resreal$Xnew
-  Xtest<-Xtest[,!( colnames(Xtest) %in% resreal$which), drop=F]
-  
-
-  whichvar[j] <-resreal$which
-  eval[j]<-distpredicteval(X,Y,Xtest, Ytest,dNPLD, num.trees=num.trees)
-}
-
+evalrealdata(dataset, n, p = 10, ntest=round(1/3*n))
 
 
 

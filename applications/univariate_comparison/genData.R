@@ -18,7 +18,38 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 1, sdS
     X <- matrix(runif(n * p), ncol = p)
     X <- cbind(x,X)
     return(list(y=y,X=X))
-  } else if (dataset == "synthetic4") {
+  } else if (dataset == "bivariatesynthetic"){
+    x1 <- runif(n,0,1)
+    x2 <- runif(n,0,1)
+    y1 <- runif(n,x1,x1+1)
+    y2 <- runif(n,0,x2)
+    X <- matrix(runif(n * p), ncol = p)
+    X <- cbind(x1,x2,X)
+    y<- cbind(y1,y2)
+    return(list(y=y,X=X))
+  } else if (dataset == "copulasynthetic" ){
+    X  <- matrix(runif(n*p, min = -1, max = 1), ncol = p)
+    d<-2
+    gen = function(xx) {
+    # copula
+    normCop <- normalCopula(param=c(xx[1]), dim = 2)
+    # margins
+    paramMargins = list(list(mean = 0, sd = 1), list(mean = 0, sd = 1))
+    mdvNorm <- mvdc(copula=normCop, margins=c("norm", "norm"), paramMargins=paramMargins)
+    # gen
+    c(rMvdc(n = 1, mvdc = mdvNorm), rnorm(d-2))
+    }
+    y <- t(apply(X, 1, gen))
+    names = c()
+    for(i in 1:d){
+      names = c(names, paste0('Y', i))
+    }
+    colnames(y) <- names
+    
+    return(list(y=y,X=X))
+  }
+  
+  else if (dataset == "synthetic4") {
     x <- runif(n)
     y <- sin(4*pi*x) + ifelse(x>=.5, rnorm(n), rnorm(n, sd=2))
     X <- matrix(runif(n * p), ncol = p)
