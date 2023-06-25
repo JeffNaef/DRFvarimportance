@@ -47,6 +47,28 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     colnames(y) <- names
     
     return(list(y=y,X=X))
+  }else if (dataset=="GP"){
+    
+    X  <- matrix(runif(n*p, min = 0, max = 1), ncol = p)
+    d<-100
+
+    # Create a grid of points
+    t <- seq(-5, 5, length.out = d)
+    y<-sapply(1:n, function(i){
+    # Set the parameters
+    lengthscale <- X[i,2]  # lengthscale parameter for the RBF kernel depending on X_2
+  
+    # Compute the covariance matrix using the RBF kernel
+    K <-   kernelMatrix(rbfdot(sigma =lengthscale), t, y = t)
+  
+    # Simulate from the Gaussian process
+    rmvnorm(1, mean = rep(X[i,1],d), sigma = K)
+    })
+    ## Plot the simulation
+    #plot(x, y, type = "l", main = "Gaussian Process Simulation with Gaussian Kernel")
+    
+    return(list(y=t(y),X=X))
+    
   }
   
   else if (dataset == "synthetic4") {

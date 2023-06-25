@@ -17,7 +17,7 @@ evalsynthetic <- function(dataset, L=10, n, p, num.trees, ... ){
     
     
     
-    ressynth<-drfwithVI(X, Y, B=1, num.trees=num.trees)
+    ressynth<-drfwithVI(X, Y, B=1, num.trees=num.trees, num.features=10)
     
     resmat[,l] <- ressynth$VI
   }
