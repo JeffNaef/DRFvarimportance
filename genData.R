@@ -1,18 +1,18 @@
-genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 1, sdShift = 1) {
+genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, sdShift = 1) {
   
-  if (dataset == "synthetic1") {
+  if (dataset == "meanshift") {
     x <- runif(n,-1,1)
     y <- rnorm(n, mean = meanShift*(x > 0))
     X <- matrix(runif(n * (p-1)), ncol = p-1)
     X <- cbind(x,X)
     return(list(y=y,X=X))
-  } else if (dataset == "synthetic2") {
+  } else if (dataset == "sdshift") {
     x <- runif(n,-1,1)
     y <- rnorm(n, sd = 1 + sdShift*(x > 0))
     X <- matrix(runif(n * (p-1)), ncol = p-1)
     X <- cbind(x,X)
     return(list(y=y,X=X))
-  } else if (dataset == "synthetic3") {
+  } else if (dataset == "distshift") {
     x <- runif(n,-1,1)
     y <- ifelse(x >= 0, rexp(n = n, 1), rnorm(n, 1, 1))
     X <- matrix(runif(n * (p-1)), ncol = p-1)

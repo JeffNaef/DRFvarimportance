@@ -35,7 +35,7 @@ num.trees<-3000
 ## Step 2: Do Analysis
 
 ### 2.a) if the dataset is synthetic, we can check the correct variable ordering
-evalsynthetic(dataset="copulasynthetic", L=10, n=n, p=10, num.trees = num.trees)
+evalsynthetic(dataset="sdshift", L=10, n=n, p=10, num.trees = num.trees)
 
 
 
