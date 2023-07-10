@@ -22,7 +22,11 @@ mmd <- function(X, Y, sigma) {
 }
 
 
-drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
+drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=NULL,...){
+  
+  require(drf)
+  require(kernlab)
+  require(Matrix)
   
   args<-list(...)
   
@@ -33,7 +37,11 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
   
   if (sample.splitting == T) {
     
-    ntest<-args$ntest
+    if (is.null(ntest)){
+      stop("ntest needs to be specified")
+      
+    }
+    
     
     # Sample Splitting
     Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
@@ -45,6 +53,8 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
     # No sample splitting
     Xtest <- X
     Ytest <- Y
+    
+    ntest<-n
   }
   
   
@@ -109,7 +119,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
   }else{
     
     DRF2<-drf(X,Y, ...)
-    wall<-predict(DRF2,x = Xtest)$weights
+    wall<-predict(DRF2,newdata = Xtest)$weights
     
     I0 <- sapply(1:ncol(Xtest), function(j) {
       # iterate over class 1
@@ -121,7 +131,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
           Y = Y,
          ...)
       
-      DRFpredj = predict(DRFj, x = Xtest[, -j])
+      DRFpredj = predict(DRFj, newdata = Xtest[, -j])
       wj <- DRFpredj$weights
       val <- sum(diag( (wj - wall) %*% K %*% t(wj - wall) ))
       
@@ -135,6 +145,8 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
   # alternative:
   #wbar<- rep(1/ntest,ntest)
   wall_wbar<-sweep(wall, 2, wbar, "-")
+  #alternative:
+  #wall_wbar<-sweep(diag(ntest), 2, wbar, "-")
   #( I<-I0/as.numeric( mean(diag(  as.matrix(wall) %*% K %*% t( as.matrix(wall)) )) - colMeans(wall)%*%K%*%colMeans(wall) ) )
   (I <-
       I0 / as.numeric(sum(diag(
@@ -142,6 +154,27 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F,...){
       ))))
   
   names(I) <- colnames(X)
+  
+  
+  # # ### standardize for randomness
+  # ## With CI
+  # warning("Standardization is activated")
+  # DRFstand <-
+  #   drf(
+  #     X = X,
+  #     Y = Y,
+  #     ...)
+  # 
+  # DRFpredstand = predict(DRFstand, newdata = Xtest)
+  # wstand <- DRFpredstand$weights
+  # val <- sum(diag( (wstand - wall) %*% K %*% t(wstand - wall) ))
+  # 
+  #  standardizeval <- val / as.numeric(sum(diag(
+  #   wall_wbar %*% K %*% t(wall_wbar)
+  # )))
+  # 
+  # I<-I-standardizeval
+  # # #######
   
   if (B > 1){
   return( list(VI=I, weights=wall,DRFpred=DRFpred))
@@ -205,7 +238,7 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d, ...){
   
   # Step 1: Fit and Predict
   DRF<-drf(X,Y, ...)
-  weights<-predict(DRF,Xtest)$weights
+  weights<-predict(DRF,newdata=Xtest)$weights
   
   D<-sapply(1:nrow(weights),function(i){
     
@@ -259,7 +292,7 @@ predictdrf<- function(DRF, x, functional = NULL, ...) {
     
     weightsbfinal <- Matrix(0, nrow = ntest, ncol = n , sparse = TRUE)
     
-    weightsbfinal[, l$indices] <- predict(l$DRF, x)$weights 
+    weightsbfinal[, l$indices] <- predict(l$DRF, newdata=x)$weights 
     
     return(weightsbfinal)
   })

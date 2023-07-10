@@ -21,7 +21,7 @@ set.seed(10)
 
 ### Continue with more fancy examples!!!
 
-n<-500
+n<-1000
 ntest<-round(n*0.1)
 num.trees<-3000
 
