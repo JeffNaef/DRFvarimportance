@@ -12,6 +12,12 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     X <- matrix(runif(n * (p-1)), ncol = p-1)
     X <- cbind(x,X)
     return(list(y=y,X=X))
+    }else if (dataset == "motivatingexample") {
+      x1 <- runif(n,-1,1)
+      x2 <- runif(n,-1,1)
+      y <- rnorm(n,mean = meanShift*(x1 > 0), sd = 1 + sdShift*(x2 > 0))
+      X <- cbind(x1,x2)
+      return(list(y=y,X=X)) 
   } else if (dataset == "distshift") {
     x <- runif(n,-1,1)
     y <- ifelse(x >= 0, rexp(n = n, 1), rnorm(n, 1, 1))
@@ -50,7 +56,7 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
   }else if (dataset=="GP"){
     
     X  <- matrix(runif(n*p, min = 0, max = 1), ncol = p)
-    d<-100
+    d<-30
 
     # Create a grid of points
     t <- seq(-5, 5, length.out = d)

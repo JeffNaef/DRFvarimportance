@@ -21,9 +21,9 @@ set.seed(10)
 
 ### Continue with more fancy examples!!!
 
-n<-1000
+n<-500
 ntest<-round(n*0.1)
-num.trees<-3000
+num.trees<-2000
 
 ##### Continue with the collection of the DRF datasets ######
 ## Discuss with Julie: Could be super interesting to use a medical dataset with
@@ -35,7 +35,7 @@ num.trees<-3000
 ## Step 2: Do Analysis
 
 ### 2.a) if the dataset is synthetic, we can check the correct variable ordering
-evalsynthetic(dataset="GP", L=10, n=n, p=10, num.trees = num.trees)
+evalsynthetic(dataset="GP", L=10, n=n, B=1, p=10, num.trees = num.trees)
 
 
 

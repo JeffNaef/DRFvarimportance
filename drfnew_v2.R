@@ -66,6 +66,8 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
   
   if (B > 1){
     
+    alpha<-0.05
+    
     DRF <-
       drfCI(
         X = X,
@@ -91,7 +93,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
           ...
         )
       
-      DRFpredj = predictdrf(DRFj, x = Xtest[, -j])
+      DRFpredj = predictdrf(DRFj, x = Xtest[, -j, drop=F])
       wj <- DRFpredj$weights
       val <- sum(diag( (wj - wall) %*% K %*% t(wj - wall) ))
       
@@ -131,7 +133,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
           Y = Y,
          ...)
       
-      DRFpredj = predict(DRFj, newdata = Xtest[, -j])
+      DRFpredj = predict(DRFj, newdata = Xtest[, -j, drop=F])
       wj <- DRFpredj$weights
       val <- sum(diag( (wj - wall) %*% K %*% t(wj - wall) ))
       
@@ -152,6 +154,9 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
       I0 / as.numeric(sum(diag(
         wall_wbar %*% K %*% t(wall_wbar)
       ))))
+  
+  ## Standardize such that everything sums to 1
+  #I<-I/sum(I)
   
   names(I) <- colnames(X)
   
