@@ -81,7 +81,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
     ##
     
     
-    I0 <- sapply(1:ncol(Xtest), function(j) {
+    I0list <- lapply(1:ncol(Xtest), function(j) {
       # iterate over class 1
       
       ## With CI
@@ -107,16 +107,23 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
         wb <- DRFpred$weightsb[[b]]
         
         sum(diag((wb - wall - (wbj - wj)) %*% K %*% t(wb - wall - (wbj - wj))))
+        #sum(diag((wj - wall - (wbj - wb)) %*% K %*% t(wj - wall - (wbj - wb))))
       })
       ##
       right_quantile <- quantile(nulldist, 1 - alpha)
       
       
-      max(val - unname(right_quantile), 0)
+     
       
-      
+      return( list( I0=val, nulldist=nulldist,  correctI0=max(val - unname(right_quantile), 0)       ) )
       
     })
+    
+    
+    I0<-sapply(1:ncol(Xtest), function(j)  I0list[[j]]$I0  )
+    
+    
+    
     
   }else{
     
@@ -150,15 +157,26 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
   #alternative:
   #wall_wbar<-sweep(diag(ntest), 2, wbar, "-")
   #( I<-I0/as.numeric( mean(diag(  as.matrix(wall) %*% K %*% t( as.matrix(wall)) )) - colMeans(wall)%*%K%*%colMeans(wall) ) )
-  (I <-
+  I <-
       I0 / as.numeric(sum(diag(
         wall_wbar %*% K %*% t(wall_wbar)
-      ))))
+      )))
   
   ## Standardize such that everything sums to 1
   #I<-I/sum(I)
   
   names(I) <- colnames(X)
+  
+  
+  if (B > 1){
+    Icorrected <-
+      sapply(1:ncol(Xtest), function(j)  I0list[[j]]$correctI0  ) / as.numeric(sum(diag(
+         wall_wbar %*% K %*% t(wall_wbar)
+       )))
+    
+    names(Icorrected) <- colnames(X)
+    
+  }
   
   
   # # ### standardize for randomness
@@ -182,7 +200,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
   # # #######
   
   if (B > 1){
-  return( list(VI=I, weights=wall,DRFpred=DRFpred))
+  return( list(VI=I, VIcorrected=Icorrected, weights=wall,DRFpred=DRFpred, I0list=I0list))
   }else{
     return( list(VI=I, weights=wall)) 
   }

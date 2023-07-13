@@ -35,7 +35,7 @@ num.trees<-2000
 ## Step 2: Do Analysis
 
 ### 2.a) if the dataset is synthetic, we can check the correct variable ordering
-evalsynthetic(dataset="GP", L=10, n=n, B=1, p=10, num.trees = num.trees)
+evalsynthetic(dataset="meanshift", L=10, n=n, B=50, p=3, num.trees = num.trees)
 
 
 
@@ -44,6 +44,38 @@ evalsynthetic(dataset="GP", L=10, n=n, B=1, p=10, num.trees = num.trees)
 # Sample Splitting
 
 evalrealdata(dataset, n, p = 10, ntest=round(1/3*n))
+
+
+
+
+
+
+
+
+### Testing of Testing
+
+n<-1000
+tmp<-genData(dataset = "motivatingexample", n = n, p = 3)
+
+
+X<-tmp$X
+Y<-as.matrix(tmp$y)
+colnames(X) <- paste0("X",1:ncol(X))
+
+B<-50
+num.trees=500
+num.features=10
+sample.splitting=T
+ntest=10
+
+
+ressynth<-drfwithVI(X, Y, B=B, num.trees=num.trees, num.features=num.features, sample.splitting=sample.splitting, ntest=ntest)
+
+
+ressynth$VIcorrected
+
+
+
 
 
 
