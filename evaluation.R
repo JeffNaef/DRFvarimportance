@@ -1,5 +1,5 @@
 
-evalsynthetic <- function(dataset, L=10, B=1, n, p, num.trees, ... ){
+evalsynthetic <- function(dataset, L=10, B=1, n, p, num.trees, MRF=F, ... ){
   
   
   if (dataset=="motivatingexample"){
@@ -14,6 +14,16 @@ evalsynthetic <- function(dataset, L=10, B=1, n, p, num.trees, ... ){
   
   resmat <- matrix(NaN, nrow=p, ncol=L)
   rownames(resmat) <- paste0("X",1:p)
+  
+  if (MRF==T){
+    
+    resmatMRF1 <- matrix(NaN, nrow=p, ncol=L)
+    rownames(resmatMRF1) <- paste0("X",1:p)
+    
+    
+    resmatMRF2 <- matrix(NaN, nrow=p, ncol=L)
+    rownames(resmatMRF2) <- paste0("X",1:p)
+  }
 
   
   for (l in 1:L){
@@ -44,6 +54,19 @@ evalsynthetic <- function(dataset, L=10, B=1, n, p, num.trees, ... ){
     ressynth<-drfwithVI(X, Y, B=B, num.trees=num.trees, num.features=num.features, ...)
     
     resmat[,l] <- ressynth$VI
+    
+    if (MRF==T){
+    
+    MRFVI_1<-MeanOutcomeDifference(X, Y, num_trees=num.trees, ...)
+    MRFVI_2<-MeanSplitImprovement(X, Y, num_trees=num.trees, ...)
+    
+
+    resmatMRF1[,l] <- MRFVI_1$VI
+    resmatMRF2[,l] <- MRFVI_2$VI
+    }
+    
+
+
   }
   
   res <- rowMeans(resmat)
@@ -51,6 +74,22 @@ evalsynthetic <- function(dataset, L=10, B=1, n, p, num.trees, ... ){
   nams<-names(resordered)
   resordered <- matrix(resordered,nrow=1)
   colnames(resordered) <- nams
+  
+  
+  if (MRF==T){
+    resMRF1 <- rowMeans(resmatMRF1)
+    resorderedMRF1 <- round(sort(resMRF1, decreasing = T),3)
+    nams<-names(resorderedMRF1)
+    resorderedMRF1 <- matrix(resorderedMRF1,nrow=1)
+    colnames(resorderedMRF1) <- nams
+    
+    resMRF2 <- rowMeans(resmatMRF2)
+    resorderedMRF2 <- round(sort(resMRF2, decreasing = T),3)
+    nams<-names(resorderedMRF2)
+    resorderedMRF2 <- matrix(resorderedMRF2,nrow=1)
+    colnames(resorderedMRF2) <- nams
+    
+  }
   
   
   ## Create latex table

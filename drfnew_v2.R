@@ -59,7 +59,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
   
   
   
-  bandwidth_Y <- drf:::medianHeuristic(Ytest)
+  bandwidth_Y <- drf:::medianHeuristic(Y)
   k_Y <- rbfdot(sigma = bandwidth_Y)
   K <- kernelMatrix(k_Y, Y, y = Y)
   
