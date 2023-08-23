@@ -10,7 +10,7 @@ mmd <- function(X, Y, sigma) {
   # Compute the kernel matrices
   K_X <- kernelMatrix(k_X, X, y = X)
   K_Y <- kernelMatrix(k_Y, Y, y = Y)
-  K_XY <- kernelMatrix(k_X, X, y = Y)
+  K_XY <- kernelMatrix(k_X, t(X), y = Y)
   
   # Compute the average kernel values
   XX <- mean(K_X)
@@ -20,6 +20,10 @@ mmd <- function(X, Y, sigma) {
   # Compute the MMD
   sqrt(XX + YY - 2 * XY)
 }
+
+
+
+
 
 
 drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=NULL,...){
@@ -115,7 +119,7 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
       
      
       
-      return( list( I0=val, nulldist=nulldist,  correctI0=max(val - unname(right_quantile), 0)       ) )
+      return( list( I0=val, nulldist=nulldist,  correctI0=pmax(val - unname(right_quantile), 0)       ) )
       
     })
     
@@ -179,25 +183,25 @@ drfwithVI <- function(X, Y, B, sampling = "binomial", sample.splitting=F, ntest=
   }
   
   
-  # # ### standardize for randomness
-  # ## With CI
-  # warning("Standardization is activated")
-  # DRFstand <-
-  #   drf(
-  #     X = X,
-  #     Y = Y,
-  #     ...)
-  # 
-  # DRFpredstand = predict(DRFstand, newdata = Xtest)
-  # wstand <- DRFpredstand$weights
-  # val <- sum(diag( (wstand - wall) %*% K %*% t(wstand - wall) ))
-  # 
-  #  standardizeval <- val / as.numeric(sum(diag(
-  #   wall_wbar %*% K %*% t(wall_wbar)
-  # )))
-  # 
-  # I<-I-standardizeval
-  # # #######
+  # ### standardize for randomness
+  ## With CI
+  warning("Standardization is activated")
+  DRFstand <-
+    drf(
+      X = X,
+      Y = Y,
+      ...)
+
+  DRFpredstand = predict(DRFstand, newdata = Xtest)
+  wstand <- DRFpredstand$weights
+  val <- sum(diag( (wstand - wall) %*% K %*% t(wstand - wall) ))
+
+   standardizeval <- val / as.numeric(sum(diag(
+    wall_wbar %*% K %*% t(wall_wbar)
+  )))
+
+  I<-pmax(I-standardizeval,0)
+  # #######
   
   if (B > 1){
   return( list(VI=I, VIcorrected=Icorrected, weights=wall,DRFpred=DRFpred, I0list=I0list))
@@ -224,22 +228,45 @@ featureeliminnation<- function(X,Y, B=1, num.trees=1000,...){
 
 
 ## Define a distance function D
-dmmd<-function(w, Y,y){
+dMMD<-function(w, Y,y, K_Y){
   
-  # Simulate 500 observations from Y|X=x
-  Yx<-sample(Y,size=500, replace=T,prob=w)
+  # Simulate 1000 observations from Y|X=x
+  #Yx<-Y[sample(1:nrow(Y),size=1000, replace=T,prob=w),]
   
+  
+  sigma <- drf:::medianHeuristic(Y)
   ## Can do this better by direct calculation!
   
-  return(mmd(y,Yx,sigma=1))
+  
+  # Define the Gaussian kernel
+  k_y <- rbfdot(sigma = sigma)
+  k_Y <- rbfdot(sigma = sigma)
+  
+  # Compute the kernel matrices
+  K_y <- kernelMatrix(k_y, y, y = y)
+  #K_Y <- kernelMatrix(k_Y, Y, y = Y)
+  K_yY <- kernelMatrix(k_y, t(y), y = Y)
+  
+  # Compute the average kernel values
+  XX <- K_y
+  YY <- w%*%K_Y%*%w
+  XY <- sum(w*K_yY)
+  
+  # Compute the MMD
+  
+  
+  return(sqrt(XX + YY - 2 * XY))
   
 }
 
 dNPLD <- function(w,Y,y){
   
+
+  # Simulate 1000 observations from Y|X=x
+  Yx<-Y[sample(1:nrow(Y),size=1000, replace=T,prob=w),]
   
-  # Simulate 500 observations from Y|X=x
-  Yx<-sample(Y,size=500, replace=T,prob=w)
+  #bandwidth <- drf:::medianHeuristic(Yx)
+  #densityvaly <- kde(Yx, eval.points = y, h=bandwidth)$estimate
   densityvaly <- kde(Yx, eval.points = y)$estimate
   
   return( - log(densityvaly))
@@ -248,7 +275,9 @@ dNPLD <- function(w,Y,y){
 
 
 
-distpredicteval <- function(X,Y,Xtest, Ytest,d, ...){
+
+
+distpredicteval <- function(X,Y,Xtest, Ytest,d="MMD", parallel=F, ...){
 
   
   ## d: a function that takes in d, Y and a test point y and evaluates a metric
@@ -263,13 +292,55 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d, ...){
   DRF<-drf(X,Y, ...)
   weights<-predict(DRF,newdata=Xtest)$weights
   
-  D<-sapply(1:nrow(weights),function(i){
-    
-   - d(weights[i,], Y, Ytest[i,])
-    
-  } )
   
-  return(mean(D))
+  sigma <- drf:::medianHeuristic(Y)
+
+  if (d=="MMD"){
+    
+    # Define the Gaussian kernel
+    k_y <- rbfdot(sigma = sigma)
+    k_Y <- rbfdot(sigma = sigma)
+    
+    # Compute the kernel matrices
+    K_y <- kernelMatrix(k_y, Ytest, y = Ytest)
+    K_Y <- kernelMatrix(k_Y, Y, y = Y)
+    K_yY <- kernelMatrix(k_y, Ytest, y = Y)
+    
+    
+    
+    yy<-diag(K_y)
+    YY<-diag(weights%*%K_Y%*%t(weights))
+    Yy<-diag(K_yY%*%t(weights))
+    
+    res <- mean(sqrt(yy+YY-2*Yy))
+    
+  }else if (d=="NPLD"){
+  
+  if (parallel==T){
+  
+  D <- foreach(i = 1:nrow(weights), .export=c("d","mmd"), .packages = c("kernlab"), .combine=rbind) %dopar% {
+    
+    result <- - dNPLD(weights[i,], Y, Ytest[i,])  # Make sure you replace 'your_package_containing_d_function' with the actual package name
+    return(result)
+  }
+  }else{
+    
+    D<-sapply(1:nrow(weights),function(i){
+
+      if(i%%10==0){cat(i)}
+
+     dNPLD(weights[i,], Y, Ytest[i,])
+
+    } )
+  }
+    
+    res<-mean(D, na.rm=T, trim=0.05)
+    
+  }
+  
+  
+  
+  return(res)
   
 }
 

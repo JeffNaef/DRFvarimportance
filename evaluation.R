@@ -105,16 +105,20 @@ evalsynthetic <- function(dataset, L=10, B=1, n, p, num.trees, MRF=F, ... ){
 
 
 
-evalrealdata <- function(dataset, n, p = 10, ntest=round(1/3*n),... ){
+evalrealdata <- function(dataset, n, B=1, ntest=round(1/2*n), num.trees=500, successivVI=F , ... ){
   
   
   
-  tmp<-genData(dataset = dataset, n = n, p = 10, ...)
+  tmp<-genData(dataset = dataset, n = n, ...)
   
   
   X<-tmp$X
   Y<-as.matrix(tmp$y)
+  
+  if (is.null(colnames(X))){
   colnames(X) <- paste0("X",1:ncol(X))
+  }
+  
   
   Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
   Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
@@ -124,10 +128,16 @@ evalrealdata <- function(dataset, n, p = 10, ntest=round(1/3*n),... ){
   
   
   
-  whichvar<-rep(NA,ncol(X)-1)
-  eval<-rep(NA,ncol(X)-1)
-  p<-ncol(X)
+
   
+  if (successivVI==T){
+    
+    whichvar<-rep(NA,ncol(X)-1)
+    eval<-rep(NA,ncol(X)-1)
+    p<-ncol(X)
+    
+  
+  ##Calculate variable importance several times
   for (j in 1:(p - 1)  ){
     
     
@@ -139,9 +149,21 @@ evalrealdata <- function(dataset, n, p = 10, ntest=round(1/3*n),... ){
     
     whichvar[j] <-resreal$which
     eval[j]<-distpredicteval(X,Y,Xtest, Ytest,dNPLD, num.trees=num.trees)
+    #eval[j]<-distpredicteval(X,Y,Xtest, Ytest,dMMD, num.trees=num.trees)
   }
   
   
   return(list(whichvar=whichvar, eval=eval))
+    
+  }else{
+    
+
+    
+    ##Calculate variable importance only once
+    ressynth<-drfwithVI(X, Y, B=B, num.trees=num.trees, ...)
+
+    
+    return( list(ressynth=ressynth, X=X, Y=Y, Xtest=Xtest, Ytest=Ytest)   )
+  }
   
 }

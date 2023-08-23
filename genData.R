@@ -75,9 +75,48 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     
     return(list(y=t(y),X=X))
     
-  }
-  
-  else if (dataset == "synthetic4") {
+  }else if (dataset=="real_wagedata") {
+    
+    load("~/GitHub/DRFvarimporance/applications/wage_data/data/datasets/wage_benchmark.Rdata")
+    
+    index<-sample(1:nrow(X), size = n,replace = F)
+    
+    X<-X[index,]
+    Y<-Y[index,]
+    
+    X<-cbind(X,Y[,"male"])
+    colnames(X)[ncol(X)]<-"male"
+    Y<-Y[,1, drop=F]
+    
+    
+    return(list(y=Y,X=X))
+    
+    
+  } else if(dataset=="real_birthdata") {
+    
+    load("~/GitHub/DRFvarimporance/applications/births_data/data/datasets/births_benchmark.Rdata")
+    
+    #load("~/GitHub/DRFvarimporance/applications/births_data/data/datasets/births_benchmark2.Rdata")
+    
+    index<-sample(1:nrow(X), size = n,replace = F)
+    
+    X<-X[index,]
+    Y<-Y[index,]
+    
+    return(list(y=Y,X=X))
+    
+  } else if(dataset=="real_birthdata2") {
+    
+    load("~/GitHub/DRFvarimporance/applications/births_data/data/datasets/births_benchmark2.Rdata")
+    
+    index<-sample(1:nrow(X), size = n,replace = F)
+    
+    X<-X[index,]
+    Y<-Y[index,]
+    
+    return(list(y=Y,X=X))
+    
+  }else if (dataset == "synthetic4") {
     x <- runif(n)
     y <- sin(4*pi*x) + ifelse(x>=.5, rnorm(n), rnorm(n, sd=2))
     X <- matrix(runif(n * p), ncol = p)
