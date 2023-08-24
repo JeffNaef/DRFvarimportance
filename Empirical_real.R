@@ -29,13 +29,15 @@ registerDoParallel(cl)
 
 
 
-### 2.b) if it is a real dataset, I need to make a prediction function that successively filters
-# Sample Splitting
+##########################################
+### Start Evaluation of wage data #######
+##########################################
 
 start.time <- Sys.time()
+
+
+
 set.seed(10)
-
-
 n<-2000
 num.trees<-500
 
@@ -48,9 +50,12 @@ time.taken
 
 sort( round(res_wage$ressynth$VI,3), decreasing=T)
 
-##########################################
-### Start Evaluation of wage data #######
-##########################################
+
+
+# Redefine when data is loaded
+set.seed(10)
+num.trees<-500
+# Redefine when data is loaded
 
 Xtest<-res_wage$Xtest
 Ytest<-res_wage$Ytest
@@ -59,7 +64,7 @@ Y<-res_wage$Y
 VI<-res_wage$ressynth$VI
 
 
-metric<-"MMD"
+metric<-"NPLD"
 
 
 sort(VI,decreasing=T)
@@ -89,7 +94,7 @@ DRFred <- drf(X=X[,names(VI[VI > cutoff])], Y=Y, num.trees=num.trees)
 quantpredictred<-predict(DRFred, newdata=Xtest[,names(VI[VI > cutoff])], functional="quantile",quantiles=c(0.5))
 evalMAD[2] <- mean(sapply(1:nrow(Xtest), function(j)  abs(Ytest[j] - quantpredictred$quantile[,,"q=0.5"][1]) ))
 
-eval[2]<-distpredicteval(X[,names(VI[VI > cutoff])],Y,Xtest[,names(VI[VI > cutoff])], Ytest,d=metric, num.trees=num.trees, parallel=F)
+eval[2]<-distpredicteval(X[,names(VI[VI > cutoff])],Y,Xtest[,names(VI[VI > cutoff])], Ytest,d=metric, parallel=F, num.trees=num.trees)
 
 round(sort(VI[VI > cutoff], decreasing=T),3)
 
@@ -106,7 +111,7 @@ DRFred <- drf(X=X[,names(VI[VI > cutoff])], Y=Y, num.trees=num.trees)
 quantpredictred<-predict(DRFred, newdata=Xtest[,names(VI[VI > cutoff])], functional="quantile",quantiles=c(0.5))
 evalMAD[2] <- mean(sapply(1:nrow(Xtest), function(j)  abs(Ytest[j] - quantpredictred$quantile[,,"q=0.5"][1]) ))
 
-eval[2]<-distpredicteval(X[,names(VI[VI > cutoff])],Y,Xtest[,names(VI[VI > cutoff])], Ytest,d=metric, num.trees=num.trees, parallel=F)
+eval[2]<-distpredicteval(X[,names(VI[VI > cutoff])],Y,Xtest[,names(VI[VI > cutoff])], Ytest,d=metric,parallel=F, num.trees=num.trees)
 
 round(sort(VI[VI > cutoff], decreasing=T),3)
 
@@ -145,6 +150,12 @@ Ytest<-res_birth$Ytest
 X<-res_birth$X
 Y<-res_birth$Y
 VI<-res_birth$ressynth$VI
+
+
+# Redefine when data is loaded
+set.seed(10)
+num.trees<-500
+# Redefine when data is loaded
 
 metric <- "MMD"
 
@@ -201,7 +212,7 @@ start.time <- Sys.time()
 set.seed(10)
 
 
-n<-8000
+n<-2000
 num.trees<-500
 
 res_birth<-evalrealdata(dataset="real_birthdata2", n=n, ntest=round(1/2*n), num.trees=num.trees)
@@ -217,6 +228,12 @@ Ytest<-res_birth$Ytest
 X<-res_birth$X
 Y<-res_birth$Y
 VI<-res_birth$ressynth$VI
+
+
+# Redefine when data is loaded
+set.seed(10)
+num.trees<-500
+# Redefine when data is loaded
 
 metric <- "MMD"
 
