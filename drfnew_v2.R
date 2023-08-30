@@ -318,7 +318,7 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d="MMD", parallel=F, ...){
   
   if (parallel==T){
   
-  D <- foreach(i = 1:nrow(weights), .export=c("d","mmd"), .packages = c("kernlab"), .combine=rbind) %dopar% {
+  D <- foreach(i = 1:nrow(weights), .export=c("dNPLD","mmd"), .packages = c("ks", "kernlab", "drf", "Matrix"), .combine=rbind) %dopar% {
     
     result <- - dNPLD(weights[i,], Y, Ytest[i,])  # Make sure you replace 'your_package_containing_d_function' with the actual package name
     return(result)

@@ -130,7 +130,7 @@ round((evalMAD[2]-evalMAD[1])/evalMAD[1]*100,3)
 ### Start Evaluation of birth data #######
 ##########################################
 
-start.time <- Sys.time()
+start.time<- Sys.time()
 set.seed(10)
 
 
@@ -157,7 +157,7 @@ set.seed(10)
 num.trees<-500
 # Redefine when data is loaded
 
-metric <- "MMD"
+metric <- "NPLD"
 
 sort(VI,decreasing=T)
 
