@@ -44,6 +44,8 @@ compute_drf_vimp <- function(X, Y, X_test = NULL, num.trees = 500, silent = FALS
   # compute final importance (remove bias & truncate negative values)
   vimp <- sapply(I - vimp0, function(x){max(0,x)})
   
+  names(vimp)<-colnames(X)
+  
   return(vimp)
   
 }

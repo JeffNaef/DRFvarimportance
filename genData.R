@@ -12,12 +12,13 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     X <- matrix(runif(n * (p-1)), ncol = p-1)
     X <- cbind(x,X)
     return(list(y=y,X=X))
-    }else if (dataset == "motivatingexample") {
-      x1 <- runif(n,-1,1)
-      x2 <- runif(n,-1,1)
-      y <- rnorm(n,mean = meanShift*(x1 > 0), sd = 1 + sdShift*(x2 > 0))
-      X <- cbind(x1,x2)
-      return(list(y=y,X=X)) 
+  }else if (dataset == "motivatingexample") {
+    x1 <- runif(n,-1,1)
+    x2 <- runif(n,-1,1)
+    x3 <- x1+ runif(n,-1,1)
+    y <- rnorm(n,mean = meanShift*(x1 > 0), sd = 1 + sdShift*(x2 > 0))
+    X <- cbind(x1,x2, x3)
+    return(list(y=y,X=X)) 
   } else if (dataset == "distshift") {
     x <- runif(n,-1,1)
     y <- ifelse(x >= 0, rexp(n = n, 1), rnorm(n, 1, 1))
@@ -57,18 +58,18 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     
     X  <- matrix(runif(n*p, min = 0, max = 1), ncol = p)
     d<-30
-
+    
     # Create a grid of points
     t <- seq(-5, 5, length.out = d)
     y<-sapply(1:n, function(i){
-    # Set the parameters
-    lengthscale <- X[i,2]  # lengthscale parameter for the RBF kernel depending on X_2
-  
-    # Compute the covariance matrix using the RBF kernel
-    K <-   kernelMatrix(rbfdot(sigma =lengthscale), t, y = t)
-  
-    # Simulate from the Gaussian process
-    rmvnorm(1, mean = rep(X[i,1],d), sigma = K)
+      # Set the parameters
+      lengthscale <- X[i,2]  # lengthscale parameter for the RBF kernel depending on X_2
+      
+      # Compute the covariance matrix using the RBF kernel
+      K <-   kernelMatrix(rbfdot(sigma =lengthscale), t, y = t)
+      
+      # Simulate from the Gaussian process
+      rmvnorm(1, mean = rep(X[i,1],d), sigma = K)
     })
     ## Plot the simulation
     #plot(x, y, type = "l", main = "Gaussian Process Simulation with Gaussian Kernel")
@@ -77,7 +78,8 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     
   }else if (dataset=="real_wagedata") {
     
-    load("~/GitHub/DRFvarimporance/applications/wage_data/data/datasets/wage_benchmark.Rdata")
+    
+    load("applications/wage_data/data/datasets/wage_benchmark.Rdata")
     
     index<-sample(1:nrow(X), size = n,replace = F)
     
@@ -94,7 +96,7 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     
   } else if(dataset=="real_birthdata") {
     
-    load("~/GitHub/DRFvarimporance/applications/births_data/data/datasets/births_benchmark.Rdata")
+    load("applications/births_data/data/datasets/births_benchmark.Rdata")
     
     #load("~/GitHub/DRFvarimporance/applications/births_data/data/datasets/births_benchmark2.Rdata")
     
@@ -107,7 +109,7 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     
   } else if(dataset=="real_birthdata2") {
     
-    load("~/GitHub/DRFvarimporance/applications/births_data/data/datasets/births_benchmark2.Rdata")
+    load("applications/births_data/data/datasets/births_benchmark2.Rdata")
     
     index<-sample(1:nrow(X), size = n,replace = F)
     
