@@ -46,7 +46,13 @@ num.trees<-500
 
 set.seed(10)
 
-tmp<-genData(dataset = "real_wagedata", n = 2*n)
+B<-10
+
+resDRF<-list()
+resDRF_native<-list()
+ressobolMDA<-list()
+
+tmp<-genData(dataset = "real_wagedata", n = n)
 
 #tmp<-genData(dataset = "motivatingexample", n = n)
 
@@ -66,10 +72,16 @@ X <- X[1:round(n - ntest), , drop = F]
 Y <- Y[1:round(n - ntest), , drop = F]
 
 
+
+for (b in 1:B){
+
+
+
+
 VIMPDRF<-compute_drf_vimp(X, Y, X_test = NULL, num.trees = 500, silent = FALSE)
 (VIMPDRF<-sort(VIMPDRF))
 
-resDRF<-evalfinal(VIMPDRF, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"), num.trees=500 )
+resDRF[[b]]<-evalfinal(VIMPDRF, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"), num.trees=500 )
 
 
 
@@ -79,13 +91,13 @@ vimp_drf <- variable_importance(DRF)
 vimp_drf<-sort(c(vimp_drf))
 names(vimp_drf)<- colnames(X)
 
-resDRF_native<-evalfinal(vimp_drf, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"), num.trees=500 )
+resDRF_native[[b]]<-evalfinal(vimp_drf, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"), num.trees=500 )
 
 
 
 
 # Sobol MDA
-sobolMDA <- list()
+sobolMDAj <- list()
 for (j in 1:ncol(Y)){
   XY <- as.data.frame(cbind(X, Y[, j]))
   colnames(XY) <- c(paste('X', 1:(ncol(XY)-1), sep=''), 'Y')
@@ -95,16 +107,16 @@ for (j in 1:ncol(Y)){
   duration <- Sys.time() - clock
   print(duration)
   forest$r.squared
-  sobolMDA[[j]] <- forest$variable.importance
+  sobolMDAj[[j]] <- forest$variable.importance
 }
 
-sobolMDA<-colMeans(do.call(rbind,sobolMDA))
+sobolMDA<-colMeans(do.call(rbind,sobolMDAj))
 
 
-ressobolMDA<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"), num.trees=500 )
+ressobolMDA[[b]]<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"), num.trees=500 )
+}
 
-
-save(resDRF, resDRF_native, ressobolMDA, n, ntest, X,Y,Xtest,Ytest, file=paste0("real_wagedata_n=", n))
+save(resDRF, resDRF_native, ressobolMDA, X,Y, Xtest, Ytest, n, ntest, file=paste0("real_wagedata_n=", n))
 
 
 
@@ -139,7 +151,8 @@ num.trees<-500
 
 set.seed(10)
 
-tmp<-genData(dataset = "real_birthdata2", n = 2*n)
+
+tmp<-genData(dataset = "real_birthdata2", n = n)
 
 #tmp<-genData(dataset = "motivatingexample", n = n)
 
@@ -159,10 +172,14 @@ X <- X[1:round(n - ntest), , drop = F]
 Y <- Y[1:round(n - ntest), , drop = F]
 
 
+
+for (b in 1:B){
+
+
 VIMPDRF<-compute_drf_vimp(X, Y, X_test = NULL, num.trees = 500, silent = FALSE)
 (VIMPDRF<-sort(VIMPDRF))
 
-resDRF<-evalfinal(VIMPDRF, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
+resDRF[[b]]<-evalfinal(VIMPDRF, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
 
 
 
@@ -172,13 +189,13 @@ vimp_drf <- variable_importance(DRF)
 vimp_drf<-sort(c(vimp_drf))
 names(vimp_drf)<- colnames(X)
 
-resDRF_native<-evalfinal(vimp_drf, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
+resDRF_native[[b]]<-evalfinal(vimp_drf, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
 
 
 
 
 # Sobol MDA
-sobolMDA <- list()
+sobolMDAj <- list()
 for (j in 1:ncol(Y)){
   XY <- as.data.frame(cbind(X, Y[, j]))
   colnames(XY) <- c(paste('X', 1:(ncol(XY)-1), sep=''), 'Y')
@@ -188,16 +205,16 @@ for (j in 1:ncol(Y)){
   duration <- Sys.time() - clock
   print(duration)
   forest$r.squared
-  sobolMDA[[j]] <- forest$variable.importance
+  sobolMDAj[[j]] <- forest$variable.importance
 }
 
-sobolMDA<-colMeans(do.call(rbind,sobolMDA))
+sobolMDA<-colMeans(do.call(rbind,sobolMDAj))
 
 
-ressobolMDA<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
+ressobolMDA[[b]]<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD", "NPLD"), num.trees=500 )
+}
 
-
-save(resDRF, resDRF_native, ressobolMDA, n, ntest, X,Y,Xtest,Ytest, file=paste0("real_birthdata2_n=", n))
+save(resDRF, resDRF_native, ressobolMDA, X, Y, Xtest, Ytest, n, ntest, file=paste0("real_birthdata2_n=", n))
 
 
 
