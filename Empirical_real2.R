@@ -118,23 +118,58 @@ ressobolMDA[[b]]<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD"
 
 save(resDRF, resDRF_native, ressobolMDA, X,Y, Xtest, Ytest, n, ntest, file=paste0("real_wagedata_n=", n))
 
+evalMMDmat<-sapply(1:length(resDRF), function(b)  resDRF[[b]]$evalMMD)
+sdMMDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalMMDmat[j,])  )
+ylim=c(min(rowMeans(evalMMDmat) - 1.96*sdMMDmat), max(rowMeans(evalMMDmat) + 1.96*sdMMDmat ) ) 
+plot(rowMeans(evalMMDmat) - 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen", main="MMD Loss DRF", ylim=ylim, 
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmat) + 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmat), type="l", cex=0.8, col="darkblue")
 
 
-plot(1:ncol(X),resDRF$evalNPLD, type="l", cex=0.5)
-plot(1:ncol(X),resDRF$evalMMD, type="l", cex=0.5)
-plot(1:ncol(X),resDRF$evalMMD, type="l", cex=0.5)
+evalNPLDmat<-sapply(1:length(resDRF), function(b)  resDRF[[b]]$evalNPLD)
+sdNPLDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalNPLDmat[j,])  )
+ylim=c(min(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat), max(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat ) )
+plot(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen", main="NPLD Loss DRF", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalNPLDmat), type="l", cex=0.8, col="darkblue")
 
 
-plot(1:ncol(X),resDRF_native$evalNPLD, type="l", cex=0.5)
-plot(1:ncol(X),resDRF_native$evalMMD, type="l", cex=0.5)
+evalMMDmat<-sapply(1:length(resDRF_native), function(b)  resDRF_native[[b]]$evalMMD)
+sdMMDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalMMDmat[j,])  )
+ylim=c(min(rowMeans(evalMMDmat) - 1.96*sdMMDmat), max(rowMeans(evalMMDmat) + 1.96*sdMMDmat ) ) 
+plot(rowMeans(evalMMDmat) - 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen", main="MMD Loss DRF native", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmat) + 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmat), type="l", cex=0.8, col="darkblue")
 
 
+evalNPLDmat<-sapply(1:length(resDRF_native), function(b)  resDRF_native[[b]]$evalNPLD)
+sdNPLDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalNPLDmat[j,])  )
+ylim=c(min(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat), max(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat ) )
+plot(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen", main="NPLD Loss DRF native", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalNPLDmat), type="l", cex=0.8, col="darkblue")
 
-plot(1:ncol(X),ressobolMDA$evalNPLD, type="l", cex=0.5)
-plot(1:ncol(X),ressobolMDA$evalMMD, type="l", cex=0.5)
+
+evalMMDmat<-sapply(1:length(ressobolMDA), function(b)  ressobolMDA[[b]]$evalMMD)
+sdMMDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalMMDmat[j,])  )
+ylim=c(min(rowMeans(evalMMDmat) - 1.96*sdMMDmat), max(rowMeans(evalMMDmat) + 1.96*sdMMDmat ) ) 
+plot(rowMeans(evalMMDmat) - 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen", main="MMD Loss Sobol MDA", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmat) + 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmat), type="l", cex=0.8, col="darkblue")
 
 
-
+evalNPLDmat<-sapply(1:length(ressobolMDA), function(b)  ressobolMDA[[b]]$evalNPLD)
+sdNPLDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalNPLDmat[j,])  )
+ylim=c(min(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat), max(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat ) )
+plot(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen", main="NPLD Loss Sobol MDA", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalNPLDmat), type="l", cex=0.8, col="darkblue")
 
 
 ##########################################
@@ -217,24 +252,58 @@ ressobolMDA[[b]]<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD", "NPLD
 save(resDRF, resDRF_native, ressobolMDA, X, Y, Xtest, Ytest, n, ntest, file=paste0("real_birthdata2_n=", n))
 
 
-
-#plot(1:ncol(X),resDRF$evalNPLD, type="l", cex=0.5)
-plot(1:ncol(X),resDRF$evalMMD, type="l", cex=0.5)
-#plot(1:ncol(X),resDRF$evalMAD, type="l", cex=0.5)
-
-
-#plot(1:ncol(X),resDRF_native$evalNPLD, type="l", cex=0.5)
-plot(1:ncol(X),resDRF_native$evalMMD, type="l", cex=0.5)
-
+evalMMDmat<-sapply(1:length(resDRF), function(b)  resDRF[[b]]$evalMMD)
+sdMMDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalMMDmat[j,])  )
+ylim=c(min(rowMeans(evalMMDmat) - 1.96*sdMMDmat), max(rowMeans(evalMMDmat) + 1.96*sdMMDmat ) ) 
+plot(rowMeans(evalMMDmat) - 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen", main="MMD Loss DRF", ylim=ylim, 
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmat) + 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmat), type="l", cex=0.8, col="darkblue")
 
 
-#plot(1:ncol(X),ressobolMDA$evalNPLD, type="l", cex=0.5)
-plot(1:ncol(X),ressobolMDA$evalMMD, type="l", cex=0.5)
+evalNPLDmat<-sapply(1:length(resDRF), function(b)  resDRF[[b]]$evalNPLD)
+sdNPLDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalNPLDmat[j,])  )
+ylim=c(min(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat), max(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat ) )
+plot(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen", main="NPLD Loss DRF", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalNPLDmat), type="l", cex=0.8, col="darkblue")
 
 
+evalMMDmat<-sapply(1:length(resDRF_native), function(b)  resDRF_native[[b]]$evalMMD)
+sdMMDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalMMDmat[j,])  )
+ylim=c(min(rowMeans(evalMMDmat) - 1.96*sdMMDmat), max(rowMeans(evalMMDmat) + 1.96*sdMMDmat ) ) 
+plot(rowMeans(evalMMDmat) - 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen", main="MMD Loss DRF native", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmat) + 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmat), type="l", cex=0.8, col="darkblue")
 
 
+evalNPLDmat<-sapply(1:length(resDRF_native), function(b)  resDRF_native[[b]]$evalNPLD)
+sdNPLDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalNPLDmat[j,])  )
+ylim=c(min(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat), max(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat ) )
+plot(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen", main="NPLD Loss DRF native", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalNPLDmat), type="l", cex=0.8, col="darkblue")
 
+
+evalMMDmat<-sapply(1:length(ressobolMDA), function(b)  ressobolMDA[[b]]$evalMMD)
+sdMMDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalMMDmat[j,])  )
+ylim=c(min(rowMeans(evalMMDmat) - 1.96*sdMMDmat), max(rowMeans(evalMMDmat) + 1.96*sdMMDmat ) ) 
+plot(rowMeans(evalMMDmat) - 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen", main="MMD Loss Sobol MDA", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmat) + 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmat), type="l", cex=0.8, col="darkblue")
+
+
+evalNPLDmat<-sapply(1:length(ressobolMDA), function(b)  ressobolMDA[[b]]$evalNPLD)
+sdNPLDmat<-sapply(1:nrow(evalMMDmat), function(j) sd(evalNPLDmat[j,])  )
+ylim=c(min(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat), max(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat ) )
+plot(rowMeans(evalNPLDmat) - 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen", main="NPLD Loss Sobol MDA", ylim=ylim,
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalNPLDmat) + 1.96*sdNPLDmat, type="l", cex=0.8, col="darkgreen")
+lines(rowMeans(evalNPLDmat), type="l", cex=0.8, col="darkblue")
 
 
 
