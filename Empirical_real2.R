@@ -283,7 +283,14 @@ n<-2000
 ntest <- round(1/2*n)
 num.trees<-500
 
+
 set.seed(10)
+
+B<-10
+
+resDRF<-list()
+resDRF_native<-list()
+ressobolMDA<-list()
 
 
 tmp<-genData(dataset = "real_birthdata2", n = n)
@@ -357,10 +364,12 @@ sobolMDA<-colMeans(do.call(rbind,sobolMDAj))
 names(sobolMDA)<- colnames(X)
 
 
-ressobolMDA[[b]]<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD", "NPLD"), num.trees=500 )
+ressobolMDA[[b]]<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
 }
 
 save(resDRF, resDRF_native, ressobolMDA, X, Y, Xtest, Ytest, n, ntest, file=paste0("real_birthdata2_n=", n))
+
+
 ####### MMD #####################
 
 evalMMDmatDRF<-sapply(1:length(resDRF), function(b)  resDRF[[b]]$evalMMD)
