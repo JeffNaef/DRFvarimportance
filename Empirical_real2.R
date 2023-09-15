@@ -200,6 +200,14 @@ if (is.null(colnames(X))){
 }
 
 
+# remove redundant variables
+X$race_mother_white <- NULL
+X$race_father_white <- NULL
+X$marital_status_mother_unmarried <- NULL
+X$gender_M <- NULL
+X$`delivery_method_C-section` <- NULL
+
+
 Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
 Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
 #
