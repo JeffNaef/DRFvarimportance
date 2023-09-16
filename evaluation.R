@@ -337,18 +337,22 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d="MMD", parallel=F, ...){
   weights<-predict(DRF,newdata=Xtest)$weights
   
   
-  sigma <- drf:::medianHeuristic(Y)
+  sigmatest <- drf:::medianHeuristic(Ytest)
+  sigmatrain <- drf:::medianHeuristic(Y)
   
   if (d=="MMD"){
     
+    Y.transformed <- scale(Y)
+    Ytest.transformed <- scale(Ytest)
+    
     # Define the Gaussian kernel
-    k_y <- rbfdot(sigma = sigma)
-    k_Y <- rbfdot(sigma = sigma)
+    k_y <- rbfdot(sigma = sigmatest)
+    k_Y <- rbfdot(sigma = sigmatrain)
     
     # Compute the kernel matrices
-    K_y <- kernelMatrix(k_y, Ytest, y = Ytest)
-    K_Y <- kernelMatrix(k_Y, Y, y = Y)
-    K_yY <- kernelMatrix(k_y, Ytest, y = Y)
+    K_y <- kernelMatrix(k_y, Ytest.transformed, y = Ytest.transformed)
+    K_Y <- kernelMatrix(k_Y, Y.transformed, y = Y.transformed)
+    K_yY <- kernelMatrix(k_y, Ytest.transformed, y = Y.transformed)
     
     
     

@@ -24,8 +24,8 @@ source("evaluation.R")
 source("compute_drf_vimp.R")
 
 
-cl <- makeCluster(detectCores()-1)
-registerDoParallel(cl)
+#cl <- makeCluster(detectCores()-1)
+#registerDoParallel(cl)
 
 
 
@@ -267,6 +267,177 @@ lines(rowMeans(evalMADmatSobol) + 1.96*sdMADmatSobol, type="l", lty=3,lwd=2, cex
 lines(rowMeans(evalMADmatSobol), type="l", lty=3,lwd=2, cex=0.8, col="darkblue")
 
 ####### MAD #####################
+
+
+
+
+
+
+##########################################
+### Start Evaluation of air data #######
+##########################################
+
+
+
+
+set.seed(10)
+n<-2000
+ntest <- round(1/2*n)
+num.trees<-500
+
+
+set.seed(10)
+
+B<-10
+
+resDRF<-list()
+resDRF_native<-list()
+ressobolMDA<-list()
+
+
+tmp<-genData(dataset = "real_airdata", n = n)
+
+#tmp<-genData(dataset = "motivatingexample", n = n)
+
+
+X<-tmp$X
+Y<-as.matrix(tmp$y)
+
+if (is.null(colnames(X))){
+  colnames(X) <- paste0("X",1:ncol(X))
+}
+
+
+
+Xtest <- X[(round(n - ntest) + 1):n, , drop = F]
+Ytest <- Y[(round(n - ntest) + 1):n, , drop = F]
+#
+X <- X[1:round(n - ntest), , drop = F]
+Y <- Y[1:round(n - ntest), , drop = F]
+
+
+
+for (b in 1:B){
+  
+  
+  VIMPDRF<-compute_drf_vimp(X, Y, X_test = NULL, num.trees = 500, silent = FALSE)
+  (VIMPDRF<-sort(VIMPDRF))
+  
+  resDRF[[b]]<-evalfinal(VIMPDRF, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
+  
+  
+  
+  # vimp drf
+  DRF <- drf(X, Y, num.trees = 500)
+  vimp_drf <- variable_importance(DRF)
+  vimp_drf<-sort(c(vimp_drf))
+  names(vimp_drf)<- colnames(X)
+  
+  resDRF_native[[b]]<-evalfinal(vimp_drf, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
+  
+  
+  
+  
+  # Sobol MDA
+  sobolMDAj <- list()
+  for (j in 1:ncol(Y)){
+    XY <- as.data.frame(cbind(X, Y[, j]))
+    colnames(XY) <- c(paste('X', 1:(ncol(XY)-1), sep=''), 'Y')
+    num.trees <- 500
+    clock <- Sys.time()
+    forest <- sobolMDA::ranger(Y ~., data = XY, num.trees = num.trees, importance = 'sobolMDA')
+    duration <- Sys.time() - clock
+    print(duration)
+    forest$r.squared
+    sobolMDAj[[j]] <- forest$variable.importance
+  }
+  
+  sobolMDA<-colMeans(do.call(rbind,sobolMDAj))
+  names(sobolMDA)<- colnames(X)
+  
+  
+  ressobolMDA[[b]]<-evalfinal(sobolMDA, X ,Y ,Xtest, Ytest, metrics=c("MMD"), num.trees=500 )
+}
+
+save(resDRF, resDRF_native, ressobolMDA, X, Y, Xtest, Ytest, n, ntest, file=paste0("real_airdata_n=", n))
+
+
+####### MMD #####################
+
+evalMMDmatDRF<-sapply(1:length(resDRF), function(b)  resDRF[[b]]$evalMMD)
+sdMMDmatDRF<-sapply(1:nrow(evalMMDmatDRF), function(j) sd(evalMMDmatDRF[j,])  )
+
+evalMMDmatDRFnative<-sapply(1:length(resDRF_native), function(b)  resDRF_native[[b]]$evalMMD)
+sdMMDmatDRFnative<-sapply(1:nrow(evalMMDmatDRFnative), function(j) sd(evalMMDmatDRFnative[j,])  )
+
+
+evalMMDmatSobol<-sapply(1:length(ressobolMDA), function(b)  ressobolMDA[[b]]$evalMMD)
+sdMMDmatSobol<-sapply(1:nrow(evalMMDmatSobol), function(j) sd(evalMMDmatSobol[j,])  )
+
+
+ylim1=c(min(rowMeans(evalMMDmatDRF) - 1.96*sdMMDmatDRF), max(rowMeans(evalMMDmatDRF) + 1.96*sdMMDmatDRF ) ) 
+ylim2=c(min(rowMeans(evalMMDmatDRFnative) - 1.96*sdMMDmatDRFnative), max(rowMeans(evalMMDmatDRFnative) + 1.96*sdMMDmatDRFnative ) ) 
+ylim3=c(min(rowMeans(evalMMDmatSobol) - 1.96*sdMMDmatSobol), max(rowMeans(evalMMDmatSobol) + 1.96*sdMMDmatSobol ) ) 
+
+
+ylim=c(min( c(ylim1[1] , ylim2[1], ylim3[1]  )), max( c(ylim1[2] , ylim2[2], ylim3[2]  )     ) )
+
+
+## ours
+#TeX(r'(MMD Loss $I_n^{(j)}$)', bold=TRUE)
+plot(rowMeans(evalMMDmatDRF) - 1.96*sdMMDmatDRF, type="l", lwd=2, cex=0.8, col="darkgreen", main="MMD loss" , ylim=ylim, 
+     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmatDRF) + 1.96*sdMMDmatDRF, type="l", lwd=2, cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmatDRF), type="l",lwd=2, cex=0.8, col="darkblue")
+
+
+#DRF native
+#ylim=c(min(rowMeans(evalMMDmatDRFnative) - 1.96*sdMMDmatDRFnative), max(rowMeans(evalMMDmatDRFnative) + 1.96*sdMMDmatDRFnative ) ) 
+lines(rowMeans(evalMMDmatDRFnative) - 1.96*sdMMDmatDRFnative, type="l", lty=2,lwd=2, cex=0.8, col="darkgreen")
+#plot(rowMeans(evalMMDmat) - 1.96*sdMMDmat, type="l", cex=0.8, col="darkgreen", main="MMD Loss DRF native", ylim=ylim,
+#     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmatDRFnative) + 1.96*sdMMDmatDRFnative, type="l", lty=2,lwd=2, cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmatDRFnative), type="l", lty=2,lwd=2, cex=0.8, col="darkblue")
+
+
+
+lines(rowMeans(evalMMDmatSobol) - 1.96*sdMMDmatSobol, type="l", lty=3,lwd=2, cex=0.8, col="darkgreen")
+#ylim=c(min(rowMeans(evalMMDmatSobol) - 1.96*sdMMDmatSobol), max(rowMeans(evalMMDmatSobol) + 1.96*sdMMDmatSobol ) ) 
+#plot(rowMeans(evalMMDmatSobol) - 1.96*sdMMDmatSobol, type="l", cex=0.8, col="darkgreen", main="MMD Loss Sobol-MDA", ylim=ylim,
+#     xlab="Number of Variables removed", ylab="Values")
+lines(rowMeans(evalMMDmatSobol) + 1.96*sdMMDmatSobol, type="l", lty=3,lwd=2, cex=0.8, col="darkgreen")
+lines(rowMeans(evalMMDmatSobol), type="l", lty=3,lwd=2, cex=0.8, col="darkblue")
+
+####### MMD #####################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

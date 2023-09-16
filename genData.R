@@ -118,6 +118,18 @@ genData <- function(dataset = "synthetic1", n = 5000, p = 10, meanShift = 0.8, s
     
     return(list(y=Y,X=X))
     
+  } else if(dataset=="real_airdata") {
+    
+    load("applications/air_data/data/datasets/air_data_benchmark.Rdata")
+    
+    index<-sample(1:nrow(X), size = n,replace = F)
+    
+    X<-X[index,]
+    Y<-Y[index,]
+    
+    return(list(y=Y,X=X))
+    
+    
   }else if (dataset == "synthetic4") {
     x <- runif(n)
     y <- sin(4*pi*x) + ifelse(x>=.5, rnorm(n), rnorm(n, sd=2))
