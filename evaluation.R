@@ -386,7 +386,7 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d="MMD", parallel=F, ...){
         Yx<-Y[sample(1:nrow(Y),size=1000, replace=T,prob=weights[j,]),, drop=F]
         Hxsqrtm1=diag( 1/sqrt(apply( Yx, 2, drf:::medianHeuristic )))
         Yx.transformed <- Yx%*%Hxsqrtm1
-        Ytest.transformed<-diag(Hxsqrtm1)*Ytest[1,]
+        Ytest.transformed<-diag(Hxsqrtm1)*Ytest[j,]
         K_x <- kernelMatrix(k_y, Yx.transformed, y = t(Ytest.transformed))
 
         return(1/n * prod(diag(Hxsqrtm1)) * sum(K_x))
