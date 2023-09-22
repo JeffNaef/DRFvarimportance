@@ -307,11 +307,13 @@ dNPLD <- function(w,Y,y){
   
   
   # Simulate 1000 observations from Y|X=x
-  Yx<-Y[sample(1:nrow(Y),size=1000, replace=T,prob=w),]
+  Yx<-Y[sample(1:nrow(Y),size=1000, replace=T,prob=w),, drop=F]
+  
+  H=diag(apply( Yx, 2, drf:::medianHeuristic ))
   
   #bandwidth <- drf:::medianHeuristic(Yx)
   #densityvaly <- kde(Yx, eval.points = y, h=bandwidth)$estimate
-  densityvaly <- kde(Yx, eval.points = y)$estimate
+  densityvaly <- kde(Yx, eval.points = y, H=H)$estimate
   
   return( - log(densityvaly))
   
@@ -340,9 +342,8 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d="MMD", parallel=F, ...){
   
   if (d=="MMD"){
     
-    Y.transformed <- scale(Y)
-    Ytest.transformed <- scale(Ytest)
-    
+    Ytest.transformed<-Ytest
+    Y.transformed<-Y
     
     sigmatest <- (1/drf:::medianHeuristic(Ytest))^2
     sigmatrain <- (1/drf:::medianHeuristic(Y)^2)
@@ -375,14 +376,41 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d="MMD", parallel=F, ...){
       }
     }else{
       
-      D<-sapply(1:nrow(weights),function(i){
-        
-        if(i%%10==0){cat(i)}
-        
-        dNPLD(weights[i,], Y, Ytest[i,])
-        
-      } )
-    }
+      
+      k_y <- rbfdot(sigma = 1)
+      
+      D<-sapply(1:nrow(weights),  function(j){
+
+        if(j%%10==0){cat(j)}
+
+        Yx<-Y[sample(1:nrow(Y),size=1000, replace=T,prob=weights[j,]),, drop=F]
+        Hxsqrtm1=diag( 1/sqrt(apply( Yx, 2, drf:::medianHeuristic )))
+        Yx.transformed <- Yx%*%Hxsqrtm1
+        Ytest.transformed<-diag(Hxsqrtm1)*Ytest[1,]
+        K_x <- kernelMatrix(k_y, Yx.transformed, y = t(Ytest.transformed))
+
+        return(1/n * prod(diag(Hxsqrtm1)) * sum(K_x))
+
+
+      }   )
+
+      
+      # D<-sapply(1:nrow(weights),function(i){
+      # 
+      # 
+      #   #Y.transformed <- scale(Y)
+      #   #Ytest.transformed <- scale(Ytest)
+      # 
+      # 
+      #   if(i%%10==0){cat(i)}
+      # 
+      #   dNPLD(weights[i,], Y, Ytest[i,])
+      # 
+      # } )
+
+
+      
+      }
     
     res<-mean(D, na.rm=T, trim=0.05)
     

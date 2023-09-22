@@ -89,8 +89,9 @@ resDRF[[b]]<-evalfinal(VIMPDRF, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"
 # vimp drf
 DRF <- drf(X, Y, num.trees = 500)
 vimp_drf <- variable_importance(DRF)
-vimp_drf<-sort(c(vimp_drf))
 names(vimp_drf)<- colnames(X)
+vimp_drf<-sort(c(vimp_drf))
+
 
 resDRF_native[[b]]<-evalfinal(vimp_drf, X ,Y ,Xtest, Ytest, metrics=c("MMD","NPLD","MAD"), num.trees=500 )
 
