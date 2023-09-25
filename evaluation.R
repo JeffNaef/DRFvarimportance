@@ -342,8 +342,8 @@ distpredicteval <- function(X,Y,Xtest, Ytest,d="MMD", parallel=F, ...){
   
   if (d=="MMD"){
     
-    Ytest.transformed<-Ytest
-    Y.transformed<-Y
+    Ytest.transformed<-scale(Ytest)
+    Y.transformed<-scale(Y)
     
     sigmatest <- (1/drf:::medianHeuristic(Ytest))^2
     sigmatrain <- (1/drf:::medianHeuristic(Y)^2)
